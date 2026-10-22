@@ -43,3 +43,31 @@ def test_refill_does_not_exceed_capacity(clock):
     for i in range(3):
         assert tb.allow()
     assert tb.allow() == False
+
+def test_partial_refill(clock):
+    tb = TokenBucket(capacity=1, rate=2, clock=clock)
+    tb.allow()
+    clock.advance(0.25)
+    assert tb.allow() == False
+    clock.advance(0.25)
+    assert tb.allow() == True
+
+def test_cost_spends_multiple_tokens(clock):
+    tb = TokenBucket(capacity=5, rate=1, clock=clock)
+    assert tb.allow(cost=3) == True
+    assert tb.allow(cost=3) == False
+    assert tb.allow(cost=2) == True
+
+def test_rejected_request_does_not_consume(clock):
+    tb = TokenBucket(capacity=3, rate=1, clock=clock)
+    assert tb.allow(cost=5) == False
+    assert tb.allow() == True
+    assert tb.allow() == True
+    assert tb.allow() == True
+
+def test_rejects_invalid_config():
+    with pytest.raises(ValueError):
+        TokenBucket(capacity=0, rate=1)
+    with pytest.raises(ValueError):
+        TokenBucket(capacity=1, rate=0)
+    

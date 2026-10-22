@@ -2,6 +2,8 @@ import time
 
 class TokenBucket:
     def __init__(self, capacity, rate, clock=time.monotonic) -> None:
+        if capacity <= 0 or rate <= 0:
+            raise ValueError
         self.tokens = capacity
         self.capacity = capacity
         self.rate = rate
@@ -21,4 +23,5 @@ class TokenBucket:
         elapsed = now - self.last
         self.tokens = min(self.capacity, self.tokens + elapsed * self.rate)
         self.last = now
+
 
