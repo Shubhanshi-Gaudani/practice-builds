@@ -23,6 +23,10 @@ class TokenBucket:
         elapsed = now - self.last
         self.tokens = min(self.capacity, self.tokens + elapsed * self.rate)
         self.last = now
+    
+    def is_full(self):
+        self._refill()
+        return self.capacity == self.tokens
 
 class PerUserRateLimiter:
     def __init__(self, capacity, rate, clock=time.monotonic):
@@ -37,5 +41,11 @@ class PerUserRateLimiter:
         if user_id not in self.buckets:
             self.buckets[user_id] = TokenBucket(self.capacity, self.rate, clock=self.clock)
         return self.buckets[user_id].allow(cost)
+
+    def cleanup(self):
+        for user_id,bucket in list(self.buckets.items()):
+            if bucket.is_full():
+                del self.buckets[user_id]
+
 
 

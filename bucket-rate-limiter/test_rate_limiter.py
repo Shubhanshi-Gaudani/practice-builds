@@ -86,3 +86,35 @@ def test_users_refill_independently(clock):
     clock.advance(0.5)
     assert rl.allow("alice") == True
     assert rl.allow("bob") == False
+
+def test_is_full(clock):
+    tb = TokenBucket(capacity=1, rate=1, clock=clock)
+    assert tb.is_full() == True
+    tb.allow()
+    assert tb.is_full() == False
+    clock.advance(1)
+    assert tb.is_full() == True
+
+def test_cleanup_removes_full_buckets(clock):
+    limiter = PerUserRateLimiter(capacity=2, rate=1, clock=clock)
+    limiter.allow("alice")
+    clock.advance(2)
+    limiter.cleanup()
+    assert "alice" not in limiter.buckets
+
+def test_cleanup_keeps_partially_drained_buckets(clock):
+    limiter = PerUserRateLimiter(capacity=2, rate=1, clock=clock)
+    limiter.allow("alice")
+    clock.advance(0.5)
+    limiter.cleanup()
+    assert "alice" in limiter.buckets
+
+def test_behaviour_unchanged_after_cleanup(clock):
+    limiter = PerUserRateLimiter(capacity=2, rate=1, clock=clock)
+    limiter.allow("alice")
+    limiter.allow("alice")
+    clock.advance(10)
+    limiter.cleanup()
+    assert limiter.allow("alice") is True
+    assert limiter.allow("alice") is True
+    assert limiter.allow("alice") is False
