@@ -1,5 +1,5 @@
 
-from rate_limiter import TokenBucket
+from rate_limiter import TokenBucket, PerUserRateLimiter
 import pytest
 
 class FakeClock:
@@ -70,4 +70,11 @@ def test_rejects_invalid_config():
         TokenBucket(capacity=0, rate=1)
     with pytest.raises(ValueError):
         TokenBucket(capacity=1, rate=0)
+
+def test_users_are_independent(clock):
+    rl = PerUserRateLimiter(capacity=2, rate=1, clock=clock)
+    assert rl.allow("alice") == True
+    assert rl.allow("alice") == True
+    assert rl.allow("alice") == False
+    assert rl.allow("bob") == True
     
