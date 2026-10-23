@@ -1,4 +1,5 @@
 import time
+from collections import deque
 
 class TokenBucket:
     def __init__(self, capacity, rate, clock=time.monotonic) -> None:
@@ -47,5 +48,28 @@ class PerUserRateLimiter:
             if bucket.is_full():
                 del self.buckets[user_id]
 
+class SlidingWindowLimiter:
+    def __init__(self, limit, window, clock=time.monotonic):
+        if limit <= 0 or window <= 0:
+            raise ValueError
+        self.limit = limit
+        self.window = window
+        self.clock = clock
+        self.logs = {}          # user_id -> deque of request timestamps (oldest first)
 
+    def allow(self, user_id):
+        now = self.clock()
+
+        if user_id not in self.logs:
+            self.logs[user_id] = deque()
+        log = self.logs[user_id]
+
+        # Drop timestamps that have slid out of the window
+        while log and log[0] <= now - self.window:
+            log.popleft()
+
+        if len(log) < self.limit:
+            log.append(now)     # only record requests we allow
+            return True
+        return False
 

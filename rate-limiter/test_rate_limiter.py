@@ -1,5 +1,5 @@
 
-from rate_limiter import TokenBucket, PerUserRateLimiter
+from rate_limiter import TokenBucket, PerUserRateLimiter, SlidingWindowLimiter
 import pytest
 
 class FakeClock:
@@ -118,3 +118,39 @@ def test_behaviour_unchanged_after_cleanup(clock):
     assert limiter.allow("alice") is True
     assert limiter.allow("alice") is True
     assert limiter.allow("alice") is False
+
+def test_sliding_allows_up_to_limit_then_rejects(clock):
+    limiter = SlidingWindowLimiter(limit=2, window=1, clock=clock)
+    assert limiter.allow("alice") is True
+    assert limiter.allow("alice") is True
+    assert limiter.allow("alice") is False
+
+def test_sliding_still_rejects_inside_window(clock):
+    limiter = SlidingWindowLimiter(limit=2, window=1, clock=clock)
+    limiter.allow("alice")
+    limiter.allow("alice")
+    clock.advance(0.5)
+    assert limiter.allow("alice") is False
+
+def test_sliding_allows_after_window_passes(clock):
+    limiter = SlidingWindowLimiter(limit=2, window=1, clock=clock)
+    limiter.allow("alice")
+    limiter.allow("alice")
+    clock.advance(1)
+    assert limiter.allow("alice") is True
+
+def test_sliding_window_rolls(clock):
+    limiter = SlidingWindowLimiter(limit=2, window=1, clock=clock)
+    assert limiter.allow("alice") is True    # t=0
+    clock.advance(0.5)
+    assert limiter.allow("alice") is True    # t=0.5
+    assert limiter.allow("alice") is False
+    clock.advance(0.5)                       # t=1.0: the t=0 request expires
+    assert limiter.allow("alice") is True
+    assert limiter.allow("alice") is False   # t=0.5 and t=1.0 still count
+
+def test_sliding_users_are_independent(clock):
+    limiter = SlidingWindowLimiter(limit=1, window=1, clock=clock)
+    assert limiter.allow("alice") is True
+    assert limiter.allow("alice") is False
+    assert limiter.allow("bob") is True
