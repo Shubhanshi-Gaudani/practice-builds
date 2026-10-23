@@ -77,4 +77,12 @@ def test_users_are_independent(clock):
     assert rl.allow("alice") == True
     assert rl.allow("alice") == False
     assert rl.allow("bob") == True
-    
+
+def test_users_refill_independently(clock):
+    rl = PerUserRateLimiter(capacity=1, rate=1, clock=clock)
+    assert rl.allow("alice") == True
+    clock.advance(0.5)
+    assert rl.allow("bob") == True
+    clock.advance(0.5)
+    assert rl.allow("alice") == True
+    assert rl.allow("bob") == False
