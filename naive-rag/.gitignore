@@ -1,0 +1,17 @@
+# Downloaded paper abstracts: third-party content, regenerate with fetch_corpus.py
+corpus/
+
+# Downloaded model weights / Hugging Face cache (~87 MB)
+.hf_cache/
+
+# Built artifacts from later steps (FAISS index, saved embeddings)
+*.faiss
+*.index
+*.npy
+
+# Local secrets / config
+.env
+.env.*
+
+# Local tool state
+.claude/
