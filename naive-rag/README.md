@@ -19,8 +19,8 @@ python3 -m venv .venv
 ## Progress
 
 - [x] Step 1: collect the corpus (`fetch_corpus.py`) and load it as `(doc_id, text)` pairs (`load_corpus`)
-- [ ] Step 2: naive fixed-size chunking
-- [ ] Step 3: embed chunks
+- [x] Step 2: naive fixed-size chunking, 200 tokens with MiniLM's own tokenizer (`chunk_corpus`)
+- [x] Step 3: embed chunks with MiniLM, 384-dim, L2-normalized (`embed_texts`)
 - [ ] Step 4: FAISS index
 - [ ] Step 5: retrieval
 - [ ] Step 6: grounded generation
